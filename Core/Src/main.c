@@ -171,6 +171,48 @@ static void jump_to_app(void)
 }
 
 
+/* ====================================================================== */
+/*  Firmware update sequence                                               */
+/* ====================================================================== */
+static void receive_and_program(void)
+{
+    uart_send(RESP_ACK);                       /* ack the handshake          */
+
+    /* 1. read the 4-byte size */
+    uint8_t szb[4];
+    if (HAL_UART_Receive(&huart1, szb, 4, 5000) != HAL_OK) { uart_send(RESP_NACK); return; }
+    uint32_t size = (uint32_t)szb[0] | ((uint32_t)szb[1] << 8)
+                  | ((uint32_t)szb[2] << 16) | ((uint32_t)szb[3] << 24);
+
+    if (size == 0 || size > (FLASH_END_ADDRESS - APP_ADDRESS)) { uart_send(RESP_NACK); return; }
+
+    /* 2. erase only the sectors we need */
+    if (flash_erase_app(size) != HAL_OK) { uart_send(RESP_NACK); return; }
+    uart_send(RESP_ACK);                       /* ready for data             */
+
+    /* 3. receive + program in 256-byte chunks */
+    uint32_t addr      = APP_ADDRESS;
+    uint32_t remaining = size;
+    uint8_t  buf[CHUNK_SIZE];
+
+    while (remaining > 0) {
+        uint32_t n = (remaining > CHUNK_SIZE) ? CHUNK_SIZE : remaining;
+
+        if (HAL_UART_Receive(&huart1, buf, n, 5000) != HAL_OK) { uart_send(RESP_NACK); return; }
+
+        uint32_t padded = (n + 3U) & ~3U;      /* round up to a word         */
+        for (uint32_t i = n; i < padded; i++) buf[i] = 0xFFU;
+
+        if (flash_write(addr, buf, padded) != HAL_OK) { uart_send(RESP_NACK); return; }
+
+        addr      += n;
+        remaining -= n;
+        uart_send(RESP_ACK);                   /* tell host to send next     */
+    }
+
+    HAL_Delay(20);
+    jump_to_app();                             /* done - run the new app     */
+}
 
 /* USER CODE END 0 */
 
