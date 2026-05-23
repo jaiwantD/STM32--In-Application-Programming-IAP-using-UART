@@ -265,6 +265,14 @@ int main(void)
       }
   }
 
+  if (go_update) {
+      receive_and_program();                 /* jumps to app on success    */
+  }
+
+  if (app_is_valid()) {
+      jump_to_app();
+  }
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
