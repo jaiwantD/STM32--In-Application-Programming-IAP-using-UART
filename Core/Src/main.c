@@ -117,6 +117,26 @@ static HAL_StatusTypeDef flash_erase_app(uint32_t size)
     return st;
 }
 
+//----------writing in IAP from AN4657---------------
+
+static HAL_StatusTypeDef flash_write(uint32_t addr, const uint8_t *data, uint32_t len)
+{
+    HAL_FLASH_Unlock();
+    for (uint32_t i = 0; i < len; i += 4U) {
+        uint32_t word =  (uint32_t)data[i]
+                      | ((uint32_t)data[i + 1] << 8)
+                      | ((uint32_t)data[i + 2] << 16)
+                      | ((uint32_t)data[i + 3] << 24);
+        if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, addr + i, word) != HAL_OK) {
+            HAL_FLASH_Lock();
+            return HAL_ERROR;
+        }
+    }
+    HAL_FLASH_Lock();
+    return HAL_OK;
+}
+
+
 /* USER CODE END 0 */
 
 /**
