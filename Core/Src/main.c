@@ -137,6 +137,41 @@ static HAL_StatusTypeDef flash_write(uint32_t addr, const uint8_t *data, uint32_
 }
 
 
+//_______JUMP TO APPLICATION________________
+
+static uint8_t app_is_valid(void)
+{
+    uint32_t sp = *(volatile uint32_t *)APP_ADDRESS;   /* initial stack ptr  */
+    return (sp >= SRAM_START && sp <= SRAM_END);       /* not 0xFFFFFFFF      */
+}
+
+static void jump_to_app(void)
+{
+    uint32_t app_sp    = *(volatile uint32_t *)(APP_ADDRESS);
+    uint32_t app_entry = *(volatile uint32_t *)(APP_ADDRESS + 4U);
+
+    __disable_irq();
+
+    HAL_UART_DeInit(&huart1);
+    HAL_RCC_DeInit();
+    HAL_DeInit();
+    SysTick->CTRL = 0;
+    SysTick->LOAD = 0;
+    SysTick->VAL  = 0;
+
+    SCB->VTOR = APP_ADDRESS;  //Important
+
+    __set_MSP(app_sp);
+    __DSB();
+    __ISB();
+    __enable_irq();
+
+    ((void (*)(void))app_entry)();
+    while (1) { }
+}
+
+
+
 /* USER CODE END 0 */
 
 /**
