@@ -35,6 +35,15 @@
 #define FLASH_END_ADDRESS  0x08080000U          /* 512 KB device end         */
 #define SRAM_START         0x20000000U
 #define SRAM_END           0x20020000U          /* 128 KB SRAM               */
+
+
+#define CMD_HANDSHAKE      0x7FU
+#define RESP_ACK           0x79U
+#define RESP_NACK          0x1FU
+
+#define CHUNK_SIZE         256U
+
+#define BL_WINDOW_MS       8000U
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -61,6 +70,22 @@ static void MX_USART2_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+static void uart_send(uint8_t b)
+{
+    HAL_UART_Transmit(&huart1, &b, 1, 200);
+}
+
+static uint32_t addr_to_sector(uint32_t addr)
+{
+    if      (addr < 0x08004000U) return FLASH_SECTOR_0;   /* 16K */
+    else if (addr < 0x08008000U) return FLASH_SECTOR_1;   /* 16K */
+    else if (addr < 0x0800C000U) return FLASH_SECTOR_2;   /* 16K */
+    else if (addr < 0x08010000U) return FLASH_SECTOR_3;   /* 16K */
+    else if (addr < 0x08020000U) return FLASH_SECTOR_4;   /* 64K */
+    else if (addr < 0x08040000U) return FLASH_SECTOR_5;   /* 128K */
+    else if (addr < 0x08060000U) return FLASH_SECTOR_6;   /* 128K */
+    else                         return FLASH_SECTOR_7;   /* 128K */
+}
 
 /* USER CODE END 0 */
 
