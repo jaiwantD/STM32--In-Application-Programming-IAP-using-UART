@@ -249,6 +249,22 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
+  uint8_t  b;
+  uint8_t  go_update = 0;
+  uint32_t t0   = HAL_GetTick();
+  uint32_t tled = t0;
+
+  while ((HAL_GetTick() - t0) < BL_WINDOW_MS) {
+      if (HAL_UART_Receive(&huart1, &b, 1, 10) == HAL_OK && b == CMD_HANDSHAKE) {
+          go_update = 1;
+          break;
+      }
+      if ((HAL_GetTick() - tled) > 150U) {       /* ~3 Hz = "in bootloader" */
+          HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+          tled = HAL_GetTick();
+      }
+  }
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
