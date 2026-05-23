@@ -87,6 +87,36 @@ static uint32_t addr_to_sector(uint32_t addr)
     else                         return FLASH_SECTOR_7;   /* 128K */
 }
 
+
+// -----------FLASH ERASE------------------------- (note: 2.7-3V to erase)
+/*typedef enum
+{
+  HAL_OK       = 0x00U,
+  HAL_ERROR    = 0x01U,
+  HAL_BUSY     = 0x02U,
+  HAL_TIMEOUT  = 0x03U
+} HAL_StatusTypeDef; */
+
+
+static HAL_StatusTypeDef flash_erase_app(uint32_t size)
+{
+    uint32_t first = addr_to_sector(APP_ADDRESS);
+    uint32_t last  = addr_to_sector(APP_ADDRESS + size - 1U);
+
+    FLASH_EraseInitTypeDef e = {0};
+    e.TypeErase    = FLASH_TYPEERASE_SECTORS;
+    e.Banks        = FLASH_BANK_1;
+    e.Sector       = first;
+    e.NbSectors    = (last - first) + 1U;
+    e.VoltageRange = FLASH_VOLTAGE_RANGE_3;
+
+    uint32_t err = 0;
+    HAL_FLASH_Unlock();
+    HAL_StatusTypeDef st = HAL_FLASHEx_Erase(&e, &err);
+    HAL_FLASH_Lock();
+    return st;
+}
+
 /* USER CODE END 0 */
 
 /**
