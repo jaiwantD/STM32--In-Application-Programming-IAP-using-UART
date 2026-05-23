@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stm32f4xx_hal.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -31,7 +31,10 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define APP_ADDRESS        0x08008000U          /* sector 2 start            */
+#define FLASH_END_ADDRESS  0x08080000U          /* 512 KB device end         */
+#define SRAM_START         0x20000000U
+#define SRAM_END           0x20020000U          /* 128 KB SRAM               */
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
